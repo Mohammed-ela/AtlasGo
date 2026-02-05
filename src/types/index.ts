@@ -23,7 +23,7 @@ export interface Cluster {
 }
 
 export interface FilterState {
-  toilets: boolean;
+  toilet: boolean;
   parking: boolean;
   wifi: boolean;
 }

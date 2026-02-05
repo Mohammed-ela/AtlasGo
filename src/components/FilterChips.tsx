@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useMapStore } from '@/store/useMapStore';
-import { POIType } from '@/types';
+
 import { Ionicons } from '@expo/vector-icons';
 
 interface FilterChipsProps {
@@ -13,9 +13,9 @@ const FilterChips: React.FC<FilterChipsProps> = ({ onFilterChange }) => {
 
   const filterOptions = [
     {
-      key: 'toilets' as keyof typeof filters,
+      key: 'toilet' as keyof typeof filters,
       label: 'Toilettes',
-      icon: 'restroom' as const,
+      icon: 'water' as const,
       color: '#0A66C2',
     },
     {

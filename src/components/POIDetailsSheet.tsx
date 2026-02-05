@@ -1,6 +1,6 @@
 import React, { useRef, useMemo } from 'react';
 import { View, Text, TouchableOpacity, Linking, Share } from 'react-native';
-import BottomSheet, { BottomSheetView, BottomSheetBackdrop } from '@gorhom/bottom-sheet';
+import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { Ionicons } from '@expo/vector-icons';
 import { POI } from '@/types';
 import { useThemeStore } from '@/store/useThemeStore';
@@ -58,7 +58,7 @@ const POIDetailsSheet: React.FC<POIDetailsSheetProps> = ({ poi, onClose }) => {
   const getPOIIcon = (type: POI['type']) => {
     switch (type) {
       case 'toilet':
-        return 'restroom';
+        return 'water';
       case 'parking':
         return 'car';
       case 'wifi':

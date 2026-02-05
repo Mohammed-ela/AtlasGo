@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import MapView, { Marker, Region, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { Region, PROVIDER_GOOGLE } from 'react-native-maps';
 import { View, StyleSheet, Dimensions } from 'react-native';
 import { useMapStore } from '@/store/useMapStore';
 import { POI, Cluster } from '@/types';
@@ -78,16 +78,6 @@ const MapViewComponent: React.FC<MapViewComponentProps> = ({
         loadingIndicatorColor="#0A66C2"
         loadingBackgroundColor="#F7F9FC"
       >
-        {/* Marqueur de position utilisateur */}
-        {userLocation && (
-          <Marker
-            coordinate={userLocation}
-            title="Ma position"
-            pinColor="#0A66C2"
-          />
-        )}
-
-        {/* Clusters */}
         {clusters.map((cluster) => (
           <ClusterMarker
             key={cluster.id}
@@ -96,7 +86,6 @@ const MapViewComponent: React.FC<MapViewComponentProps> = ({
           />
         ))}
 
-        {/* POI individuels (si pas de clustering) */}
         {clusters.length === 0 && pois.map((poi) => (
           <POIMarker
             key={poi.id}

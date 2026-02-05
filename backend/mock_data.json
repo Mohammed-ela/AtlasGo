@@ -2,107 +2,153 @@
   "places": [
     {
       "id": "1",
-      "name": "Toilettes publiques - Châtelet",
+      "name": "Toilettes publiques - Chatelet",
       "type": "toilet",
-      "location": {
-        "latitude": 48.8566,
-        "longitude": 2.3522
-      },
-      "address": "Place du Châtelet, 75001 Paris",
+      "location": {"latitude": 48.8566, "longitude": 2.3522},
+      "address": "Place du Chatelet, 75001 Paris",
       "opening_hours": "24h/24",
       "description": "Toilettes publiques gratuites",
       "amenities": ["gratuit", "accessible"]
     },
     {
       "id": "2",
-      "name": "Parking Châtelet",
+      "name": "Parking Chatelet",
       "type": "parking",
-      "location": {
-        "latitude": 48.8576,
-        "longitude": 2.3532
-      },
+      "location": {"latitude": 48.8576, "longitude": 2.3532},
       "address": "Rue de Rivoli, 75001 Paris",
       "opening_hours": "24h/24",
       "description": "Parking souterrain",
-      "amenities": ["payant", "surveillé"]
+      "amenities": ["payant", "surveille"]
     },
     {
       "id": "3",
-      "name": "Wi-Fi gratuit - Hôtel de Ville",
+      "name": "Wi-Fi Hotel de Ville",
       "type": "wifi",
-      "location": {
-        "latitude": 48.8563,
-        "longitude": 2.3522
-      },
-      "address": "Place de l'Hôtel de Ville, 75004 Paris",
+      "location": {"latitude": 48.8563, "longitude": 2.3522},
+      "address": "Place de l'Hotel de Ville, 75004 Paris",
       "opening_hours": "24h/24",
-      "description": "Réseau Wi-Fi public gratuit",
-      "amenities": ["gratuit", "haut débit"]
+      "description": "Borne Wi-Fi publique",
+      "amenities": ["gratuit", "haut debit"]
     },
     {
       "id": "4",
       "name": "Toilettes - Gare du Nord",
       "type": "toilet",
-      "location": {
-        "latitude": 48.8808,
-        "longitude": 2.3553
-      },
+      "location": {"latitude": 48.8808, "longitude": 2.3553},
       "address": "18 Rue de Dunkerque, 75010 Paris",
       "opening_hours": "5h-23h",
-      "description": "Toilettes payantes en gare",
+      "description": "Toilettes en gare",
       "amenities": ["payant", "accessible"]
     },
     {
       "id": "5",
       "name": "Parking Gare du Nord",
       "type": "parking",
-      "location": {
-        "latitude": 48.8818,
-        "longitude": 2.3563
-      },
+      "location": {"latitude": 48.8818, "longitude": 2.3563},
       "address": "Rue de Dunkerque, 75010 Paris",
       "opening_hours": "24h/24",
-      "description": "Parking de la gare",
-      "amenities": ["payant", "surveillé", "ascenseur"]
+      "description": "Parking couvert de la gare",
+      "amenities": ["payant", "surveille", "ascenseur"]
     },
     {
       "id": "6",
-      "name": "Wi-Fi - Café de Flore",
+      "name": "Wi-Fi Square du Temple",
       "type": "wifi",
-      "location": {
-        "latitude": 48.8542,
-        "longitude": 2.3319
-      },
-      "address": "172 Boulevard Saint-Germain, 75006 Paris",
-      "opening_hours": "7h-2h",
-      "description": "Wi-Fi gratuit pour les clients",
-      "amenities": ["gratuit", "haut débit", "climatisé"]
+      "location": {"latitude": 48.8636, "longitude": 2.3619},
+      "address": "64 Rue de Bretagne, 75003 Paris",
+      "opening_hours": "7h-22h",
+      "description": "Borne Wi-Fi du square",
+      "amenities": ["gratuit"]
     },
     {
       "id": "7",
       "name": "Toilettes - Jardin du Luxembourg",
       "type": "toilet",
-      "location": {
-        "latitude": 48.8462,
-        "longitude": 2.3372
-      },
+      "location": {"latitude": 48.8462, "longitude": 2.3372},
       "address": "Jardin du Luxembourg, 75006 Paris",
       "opening_hours": "7h30-21h30",
-      "description": "Toilettes publiques du jardin",
+      "description": "Toilettes du jardin",
       "amenities": ["gratuit", "accessible"]
     },
     {
       "id": "8",
       "name": "Parking Montparnasse",
       "type": "parking",
-      "location": {
-        "latitude": 48.8422,
-        "longitude": 2.3219
-      },
-      "address": "Rue de l'Arrivée, 75015 Paris",
+      "location": {"latitude": 48.8422, "longitude": 2.3219},
+      "address": "Rue de l'Arrivee, 75015 Paris",
       "opening_hours": "24h/24",
       "description": "Parking souterrain",
-      "amenities": ["payant", "surveillé", "ascenseur"]
+      "amenities": ["payant", "surveille", "ascenseur"]
+    },
+    {
+      "id": "9",
+      "name": "Toilettes - Parc des Buttes-Chaumont",
+      "type": "toilet",
+      "location": {"latitude": 48.8810, "longitude": 2.3828},
+      "address": "1 Rue Botzaris, 75019 Paris",
+      "opening_hours": "7h-20h",
+      "description": "Toilettes du parc",
+      "amenities": ["gratuit"]
+    },
+    {
+      "id": "10",
+      "name": "Wi-Fi Place de la Republique",
+      "type": "wifi",
+      "location": {"latitude": 48.8675, "longitude": 2.3637},
+      "address": "Place de la Republique, 75011 Paris",
+      "opening_hours": "24h/24",
+      "description": "Borne Wi-Fi municipale",
+      "amenities": ["gratuit", "haut debit"]
+    },
+    {
+      "id": "11",
+      "name": "Parking Bastille",
+      "type": "parking",
+      "location": {"latitude": 48.8533, "longitude": 2.3692},
+      "address": "Place de la Bastille, 75011 Paris",
+      "opening_hours": "24h/24",
+      "description": "Parking souterrain place de la Bastille",
+      "amenities": ["payant", "surveille"]
+    },
+    {
+      "id": "12",
+      "name": "Toilettes - Tuileries",
+      "type": "toilet",
+      "location": {"latitude": 48.8634, "longitude": 2.3275},
+      "address": "Jardin des Tuileries, 75001 Paris",
+      "opening_hours": "7h-21h",
+      "description": "Toilettes publiques du jardin",
+      "amenities": ["gratuit", "accessible"]
+    },
+    {
+      "id": "13",
+      "name": "Wi-Fi Bibliotheque Nationale",
+      "type": "wifi",
+      "location": {"latitude": 48.8335, "longitude": 2.3756},
+      "address": "Quai Francois Mauriac, 75013 Paris",
+      "opening_hours": "9h-20h",
+      "description": "Wi-Fi de la BNF",
+      "amenities": ["gratuit", "haut debit"]
+    },
+    {
+      "id": "14",
+      "name": "Parking Notre-Dame",
+      "type": "parking",
+      "location": {"latitude": 48.8535, "longitude": 2.3478},
+      "address": "Place du Parvis Notre-Dame, 75004 Paris",
+      "opening_hours": "24h/24",
+      "description": "Parking souterrain",
+      "amenities": ["payant", "surveille"]
+    },
+    {
+      "id": "15",
+      "name": "Toilettes - Champ de Mars",
+      "type": "toilet",
+      "location": {"latitude": 48.8560, "longitude": 2.2986},
+      "address": "Champ de Mars, 75007 Paris",
+      "opening_hours": "8h-20h",
+      "description": "Toilettes pres de la Tour Eiffel",
+      "amenities": ["gratuit", "accessible"]
     }
   ]
 }
