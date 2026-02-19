@@ -1,24 +1,51 @@
-import React, { useRef, useMemo } from 'react';
-import { View, Text, TouchableOpacity, Linking, Share } from 'react-native';
+import React, { useRef, useMemo, useEffect } from 'react';
+import { View, Text, TouchableOpacity, Linking, Share, StyleSheet } from 'react-native';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
-import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
+import * as Haptics from 'expo-haptics';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withDelay,
+  withTiming,
+  FadeIn,
+} from 'react-native-reanimated';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { POI } from '@/types';
-import { useThemeStore } from '@/store/useThemeStore';
+import { colors, radius, blur, shadows, spacing, typography } from '@/theme/tokens';
 
 interface POIDetailsSheetProps {
   poi: POI | null;
   onClose: () => void;
 }
 
+const getIconName = (type: POI['type']): keyof typeof MaterialCommunityIcons.glyphMap => {
+  switch (type) {
+    case 'toilet': return 'toilet';
+    case 'parking': return 'parking';
+    case 'wifi': return 'wifi';
+    default: return 'map-marker';
+  }
+};
+
+const getGradient = (type: POI['type']): [string, string] => {
+  return colors.poiGradient[type] || ['#6B7592', '#4A5568'];
+};
+
+const getColor = (type: POI['type']): string => {
+  return colors.poi[type] || '#6B7592';
+};
+
 const POIDetailsSheet: React.FC<POIDetailsSheetProps> = ({ poi, onClose }) => {
   const bottomSheetRef = useRef<BottomSheet>(null);
-  const { isDark } = useThemeStore();
+  const snapPoints = useMemo(() => ['30%', '55%', '90%'], []);
 
-  const snapPoints = useMemo(() => ['25%', '50%', '90%'], []);
-
-  React.useEffect(() => {
+  useEffect(() => {
     if (poi) {
       bottomSheetRef.current?.expand();
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     } else {
       bottomSheetRef.current?.close();
     }
@@ -31,10 +58,9 @@ const POIDetailsSheet: React.FC<POIDetailsSheetProps> = ({ poi, onClose }) => {
 
   const handleDirections = async () => {
     if (!poi) return;
-
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     const { latitude, longitude } = poi.location;
     const url = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
-    
     try {
       await Linking.openURL(url);
     } catch (error) {
@@ -44,10 +70,10 @@ const POIDetailsSheet: React.FC<POIDetailsSheetProps> = ({ poi, onClose }) => {
 
   const handleShare = async () => {
     if (!poi) return;
-
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     try {
       await Share.share({
-        message: `Découvrez ${poi.name} à ${poi.address || 'cette adresse'}`,
+        message: `Decouvrez ${poi.name} a ${poi.address || 'cette adresse'}`,
         url: `https://www.google.com/maps?q=${poi.location.latitude},${poi.location.longitude}`,
       });
     } catch (error) {
@@ -55,33 +81,10 @@ const POIDetailsSheet: React.FC<POIDetailsSheetProps> = ({ poi, onClose }) => {
     }
   };
 
-  const getPOIIcon = (type: POI['type']) => {
-    switch (type) {
-      case 'toilet':
-        return 'water';
-      case 'parking':
-        return 'car';
-      case 'wifi':
-        return 'wifi';
-      default:
-        return 'location';
-    }
-  };
-
-  const getPOIColor = (type: POI['type']) => {
-    switch (type) {
-      case 'toilet':
-        return '#0A66C2';
-      case 'parking':
-        return '#D4A017';
-      case 'wifi':
-        return '#10B981';
-      default:
-        return '#6B7280';
-    }
-  };
-
   if (!poi) return null;
+
+  const gradient = getGradient(poi.type);
+  const poiColor = getColor(poi.type);
 
   return (
     <BottomSheet
@@ -90,141 +93,289 @@ const POIDetailsSheet: React.FC<POIDetailsSheetProps> = ({ poi, onClose }) => {
       snapPoints={snapPoints}
       onClose={handleClose}
       enablePanDownToClose
-      backgroundStyle={{
-        backgroundColor: isDark ? '#1F2937' : '#FFFFFF',
-      }}
-      handleIndicatorStyle={{
-        backgroundColor: isDark ? '#6B7280' : '#D1D5DB',
-      }}
+      backgroundComponent={({ style }) => (
+        <View style={[style, styles.sheetBackground]}>
+          <BlurView
+            intensity={blur.heavy}
+            tint="dark"
+            style={StyleSheet.absoluteFill}
+          />
+          <View style={[StyleSheet.absoluteFill, styles.sheetOverlay]} />
+        </View>
+      )}
+      handleIndicatorStyle={styles.handleIndicator}
     >
-      <BottomSheetView className="flex-1 px-6 py-4">
+      <BottomSheetView style={styles.content}>
         {/* Header */}
-        <View className="flex-row items-center justify-between mb-4">
-          <View className="flex-row items-center flex-1">
-            <View
-              className="w-12 h-12 rounded-2xl items-center justify-center mr-4"
-              style={{ backgroundColor: getPOIColor(poi.type) }}
+        <Animated.View
+          entering={FadeIn.delay(50).duration(300)}
+          style={styles.header}
+        >
+          <View style={styles.headerLeft}>
+            <LinearGradient
+              colors={gradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={[styles.iconContainer, shadows.glow(poiColor)]}
             >
-              <Ionicons
-                name={getPOIIcon(poi.type)}
-                size={24}
-                color="white"
+              <MaterialCommunityIcons
+                name={getIconName(poi.type)}
+                size={32}
+                color={colors.white}
               />
-            </View>
-            <View className="flex-1">
-              <Text
-                className={`text-lg font-bold ${
-                  isDark ? 'text-light-text' : 'text-dark-text'
-                }`}
-                numberOfLines={2}
-              >
+            </LinearGradient>
+            <View style={styles.headerText}>
+              <Text style={styles.title} numberOfLines={2}>
                 {poi.name}
               </Text>
-              <Text
-                className={`text-sm ${
-                  isDark ? 'text-gray-400' : 'text-gray-600'
-                }`}
-              >
-                {poi.distance ? `${Math.round(poi.distance)}m` : ''}
-              </Text>
+              {poi.distance != null && (
+                <View style={styles.distanceBadge}>
+                  <Ionicons name="navigate-outline" size={12} color={colors.primary} />
+                  <Text style={styles.distanceText}>
+                    {Math.round(poi.distance)}m
+                  </Text>
+                </View>
+              )}
             </View>
           </View>
-          
-          <TouchableOpacity onPress={handleClose}>
-            <Ionicons
-              name="close"
-              size={24}
-              color={isDark ? '#9CA3AF' : '#6B7280'}
-            />
+
+          <TouchableOpacity
+            onPress={handleClose}
+            style={styles.closeButton}
+            hitSlop={8}
+          >
+            <BlurView intensity={blur.light} tint="dark" style={StyleSheet.absoluteFill} />
+            <View style={styles.closeButtonInner}>
+              <Ionicons name="close" size={18} color={colors.text.secondary} />
+            </View>
           </TouchableOpacity>
-        </View>
+        </Animated.View>
 
-        {/* Détails */}
-        {poi.address && (
-          <View className="mb-4">
-            <Text
-              className={`text-sm font-medium mb-1 ${
-                isDark ? 'text-gray-300' : 'text-gray-700'
-              }`}
-            >
-              Adresse
-            </Text>
-            <Text
-              className={`text-base ${
-                isDark ? 'text-light-text' : 'text-dark-text'
-              }`}
-            >
-              {poi.address}
-            </Text>
-          </View>
-        )}
+        {/* Details */}
+        <Animated.View entering={FadeIn.delay(150).duration(300)}>
+          {poi.address && (
+            <View style={styles.detailRow}>
+              <Ionicons name="location-outline" size={18} color={colors.text.tertiary} />
+              <Text style={styles.detailText}>{poi.address}</Text>
+            </View>
+          )}
 
-        {poi.openingHours && (
-          <View className="mb-4">
-            <Text
-              className={`text-sm font-medium mb-1 ${
-                isDark ? 'text-gray-300' : 'text-gray-700'
-              }`}
-            >
-              Horaires
-            </Text>
-            <Text
-              className={`text-base ${
-                isDark ? 'text-light-text' : 'text-dark-text'
-              }`}
-            >
-              {poi.openingHours}
-            </Text>
-          </View>
-        )}
+          {poi.openingHours && (
+            <View style={styles.detailRow}>
+              <Ionicons name="time-outline" size={18} color={colors.text.tertiary} />
+              <Text style={styles.detailText}>{poi.openingHours}</Text>
+            </View>
+          )}
 
-        {poi.description && (
-          <View className="mb-6">
-            <Text
-              className={`text-sm font-medium mb-1 ${
-                isDark ? 'text-gray-300' : 'text-gray-700'
-              }`}
-            >
-              Description
-            </Text>
-            <Text
-              className={`text-base ${
-                isDark ? 'text-light-text' : 'text-dark-text'
-              }`}
-            >
-              {poi.description}
-            </Text>
-          </View>
+          {poi.description && (
+            <View style={styles.detailRow}>
+              <Ionicons name="information-circle-outline" size={18} color={colors.text.tertiary} />
+              <Text style={styles.detailText}>{poi.description}</Text>
+            </View>
+          )}
+        </Animated.View>
+
+        {/* Amenities */}
+        {poi.amenities && poi.amenities.length > 0 && (
+          <Animated.View
+            entering={FadeIn.delay(250).duration(300)}
+            style={styles.amenitiesContainer}
+          >
+            {poi.amenities.map((amenity, index) => (
+              <View key={index} style={styles.amenityChip}>
+                <Text style={styles.amenityText}>{amenity}</Text>
+              </View>
+            ))}
+          </Animated.View>
         )}
 
         {/* Actions */}
-        <View className="flex-row gap-3">
+        <Animated.View
+          entering={FadeIn.delay(350).duration(300)}
+          style={styles.actions}
+        >
           <TouchableOpacity
             onPress={handleDirections}
-            className="flex-1 bg-primary-500 py-4 px-6 rounded-2xl flex-row items-center justify-center"
-            style={{
-              shadowColor: '#0A66C2',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.2,
-              shadowRadius: 4,
-              elevation: 3,
-            }}
+            activeOpacity={0.8}
+            style={styles.primaryButtonContainer}
           >
-            <Ionicons name="navigate" size={20} color="white" style={{ marginRight: 8 }} />
-            <Text className="text-white font-semibold text-base">Itinéraire</Text>
+            <LinearGradient
+              colors={['#2B8DFF', '#0066DD']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={[styles.primaryButton, shadows.glow(colors.primary)]}
+            >
+              <Ionicons name="navigate" size={20} color={colors.white} style={{ marginRight: 8 }} />
+              <Text style={styles.primaryButtonText}>Itineraire</Text>
+            </LinearGradient>
           </TouchableOpacity>
 
           <TouchableOpacity
             onPress={handleShare}
-            className="bg-gray-200 py-4 px-6 rounded-2xl flex-row items-center justify-center"
+            activeOpacity={0.8}
+            style={styles.secondaryButtonOuter}
           >
-            <Ionicons name="share" size={20} color="#6B7280" style={{ marginRight: 8 }} />
-            <Text className="text-gray-700 font-semibold text-base">Partager</Text>
+            <BlurView intensity={blur.light} tint="dark" style={StyleSheet.absoluteFill} />
+            <View style={styles.secondaryButtonInner}>
+              <Ionicons name="share-outline" size={20} color={colors.text.secondary} style={{ marginRight: 8 }} />
+              <Text style={styles.secondaryButtonText}>Partager</Text>
+            </View>
           </TouchableOpacity>
-        </View>
+        </Animated.View>
       </BottomSheetView>
     </BottomSheet>
   );
 };
+
+const styles = StyleSheet.create({
+  sheetBackground: {
+    borderTopLeftRadius: radius.xxl,
+    borderTopRightRadius: radius.xxl,
+    overflow: 'hidden',
+  },
+  sheetOverlay: {
+    backgroundColor: 'rgba(19,24,36,0.95)',
+  },
+  handleIndicator: {
+    backgroundColor: colors.text.tertiary,
+    width: 40,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: spacing.xxl,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xxl,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginBottom: spacing.xl,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  iconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: radius.xl,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.lg,
+  },
+  headerText: {
+    flex: 1,
+  },
+  title: {
+    ...typography.h2,
+    color: colors.text.primary,
+    marginBottom: spacing.xs,
+  },
+  distanceBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(43,141,255,0.15)',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.sm,
+    alignSelf: 'flex-start',
+  },
+  distanceText: {
+    ...typography.small,
+    color: colors.primary,
+    marginLeft: 4,
+  },
+  closeButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    overflow: 'hidden',
+    marginLeft: spacing.sm,
+  },
+  closeButtonInner: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.glass.bg,
+    borderWidth: 1,
+    borderColor: colors.glass.border,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  detailText: {
+    ...typography.body,
+    color: colors.text.secondary,
+    marginLeft: spacing.md,
+    flex: 1,
+  },
+  amenitiesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+    marginBottom: spacing.xl,
+  },
+  amenityChip: {
+    backgroundColor: colors.glass.bg,
+    borderWidth: 1,
+    borderColor: colors.glass.border,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.pill,
+  },
+  amenityText: {
+    ...typography.small,
+    color: colors.text.secondary,
+  },
+  actions: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    marginTop: spacing.lg,
+  },
+  primaryButtonContainer: {
+    flex: 1,
+    borderRadius: radius.lg,
+    overflow: 'hidden',
+  },
+  primaryButton: {
+    height: 56,
+    borderRadius: radius.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  primaryButtonText: {
+    ...typography.bodyMedium,
+    color: colors.white,
+    fontWeight: '600',
+  },
+  secondaryButtonOuter: {
+    borderRadius: radius.lg,
+    overflow: 'hidden',
+  },
+  secondaryButtonInner: {
+    height: 56,
+    paddingHorizontal: spacing.xl,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.glass.bg,
+    borderWidth: 1,
+    borderColor: colors.glass.border,
+    borderRadius: radius.lg,
+  },
+  secondaryButtonText: {
+    ...typography.bodyMedium,
+    color: colors.text.secondary,
+    fontWeight: '600',
+  },
+});
 
 export default POIDetailsSheet;

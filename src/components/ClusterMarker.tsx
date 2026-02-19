@@ -1,63 +1,102 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import { Marker } from 'react-native-maps';
-import { View, Text } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from 'react-native-reanimated';
 import { Cluster } from '@/types';
+import { colors, shadows } from '@/theme/tokens';
 
 interface ClusterMarkerProps {
   cluster: Cluster;
   onPress: () => void;
 }
 
+const getClusterConfig = (count: number) => {
+  if (count < 10) {
+    return {
+      gradient: ['#2B8DFF', '#0066DD'] as [string, string],
+      color: colors.poi.toilet,
+      size: 44,
+    };
+  }
+  if (count < 50) {
+    return {
+      gradient: ['#FFB020', '#DD8800'] as [string, string],
+      color: colors.poi.parking,
+      size: 54,
+    };
+  }
+  return {
+    gradient: ['#FF4D6A', '#DD2244'] as [string, string],
+    color: colors.error,
+    size: 68,
+  };
+};
+
 const ClusterMarker: React.FC<ClusterMarkerProps> = ({ cluster, onPress }) => {
-  const getClusterColor = (count: number) => {
-    if (count < 10) return '#0A66C2';
-    if (count < 50) return '#D4A017';
-    return '#EF4444';
-  };
+  const scale = useSharedValue(0);
 
-  const getClusterSize = (count: number) => {
-    if (count < 10) return 30;
-    if (count < 50) return 40;
-    return 50;
-  };
+  useEffect(() => {
+    scale.value = withSpring(1, { damping: 8, stiffness: 160 });
+  }, []);
 
-  const size = getClusterSize(cluster.count);
-  const color = getClusterColor(cluster.count);
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const config = getClusterConfig(cluster.count);
 
   return (
     <Marker
       coordinate={cluster.location}
       onPress={onPress}
+      tracksViewChanges={false}
     >
-      <View
-        style={{
-          width: size,
-          height: size,
-          borderRadius: size / 2,
-          backgroundColor: color,
-          justifyContent: 'center',
-          alignItems: 'center',
-          borderWidth: 3,
-          borderColor: 'white',
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.25,
-          shadowRadius: 4,
-          elevation: 5,
-        }}
-      >
-        <Text
-          style={{
-            color: 'white',
-            fontSize: size < 40 ? 12 : 16,
-            fontWeight: 'bold',
-          }}
-        >
-          {cluster.count}
-        </Text>
-      </View>
+      <Animated.View style={animatedStyle}>
+        <View style={shadows.glow(config.color)}>
+          <LinearGradient
+            colors={config.gradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={[
+              styles.cluster,
+              {
+                width: config.size,
+                height: config.size,
+                borderRadius: config.size / 2,
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.count,
+                { fontSize: config.size < 50 ? 14 : 18 },
+              ]}
+            >
+              {cluster.count}
+            </Text>
+          </LinearGradient>
+        </View>
+      </Animated.View>
     </Marker>
   );
 };
+
+const styles = StyleSheet.create({
+  cluster: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 4,
+    borderColor: colors.white,
+  },
+  count: {
+    color: colors.white,
+    fontWeight: '700',
+  },
+});
 
 export default ClusterMarker;

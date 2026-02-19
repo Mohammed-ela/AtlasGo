@@ -1,19 +1,51 @@
-import React, { useState } from 'react';
-import { View, TextInput, TouchableOpacity } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { BlurView } from 'expo-blur';
+import * as Haptics from 'expo-haptics';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
-import { useThemeStore } from '@/store/useThemeStore';
+import { colors, radius, blur, shadows, spacing, animation } from '@/theme/tokens';
 
 interface SearchBarProps {
   onSearch: (query: string) => void;
   placeholder?: string;
 }
 
-const SearchBar: React.FC<SearchBarProps> = ({ 
-  onSearch, 
-  placeholder = "Rechercher un lieu..." 
+const SearchBar: React.FC<SearchBarProps> = ({
+  onSearch,
+  placeholder = 'Rechercher un lieu...',
 }) => {
   const [query, setQuery] = useState('');
-  const { isDark } = useThemeStore();
+  const [isFocused, setIsFocused] = useState(false);
+  const inputRef = useRef<TextInput>(null);
+
+  const scale = useSharedValue(1);
+  const borderOpacity = useSharedValue(0);
+
+  const animatedContainer = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const animatedBorder = useAnimatedStyle(() => ({
+    borderColor: `rgba(43, 141, 255, ${borderOpacity.value})`,
+  }));
+
+  const handleFocus = () => {
+    setIsFocused(true);
+    scale.value = withSpring(1.02, animation.spring);
+    borderOpacity.value = withSpring(0.8, animation.spring);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  };
+
+  const handleBlur = () => {
+    setIsFocused(false);
+    scale.value = withSpring(1, animation.spring);
+    borderOpacity.value = withSpring(0, animation.spring);
+  };
 
   const handleSearch = () => {
     onSearch(query);
@@ -25,53 +57,79 @@ const SearchBar: React.FC<SearchBarProps> = ({
   };
 
   return (
-    <View className="px-4 py-2">
-      <View
-        className={`flex-row items-center px-4 py-3 rounded-2xl border ${
-          isDark
-            ? 'bg-dark-bg/80 border-gray-600'
-            : 'bg-white/80 border-gray-300'
-        }`}
-        style={{
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 4,
-          elevation: 3,
-        }}
-      >
-        <Ionicons
-          name="search"
-          size={20}
-          color={isDark ? '#E6EAF2' : '#6B7280'}
-          style={{ marginRight: 12 }}
-        />
-        
-        <TextInput
-          value={query}
-          onChangeText={setQuery}
-          onSubmitEditing={handleSearch}
-          placeholder={placeholder}
-          placeholderTextColor={isDark ? '#9CA3AF' : '#6B7280'}
-          className={`flex-1 text-base ${
-            isDark ? 'text-light-text' : 'text-dark-text'
-          }`}
-          returnKeyType="search"
-          clearButtonMode="while-editing"
-        />
-        
-        {query.length > 0 && (
-          <TouchableOpacity onPress={handleClear} className="ml-2">
-            <Ionicons
-              name="close-circle"
-              size={20}
-              color={isDark ? '#9CA3AF' : '#6B7280'}
-            />
-          </TouchableOpacity>
-        )}
-      </View>
+    <View style={styles.wrapper}>
+      <Animated.View style={[styles.container, animatedContainer]}>
+        <BlurView intensity={blur.medium} tint="dark" style={StyleSheet.absoluteFill} />
+        <Animated.View
+          style={[
+            styles.inner,
+            animatedBorder,
+            isFocused && shadows.glow(colors.primary),
+          ]}
+        >
+          <Ionicons
+            name="search-outline"
+            size={20}
+            color={isFocused ? colors.primary : colors.text.tertiary}
+            style={styles.searchIcon}
+          />
+
+          <TextInput
+            ref={inputRef}
+            value={query}
+            onChangeText={setQuery}
+            onSubmitEditing={handleSearch}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
+            placeholder={placeholder}
+            placeholderTextColor={colors.text.tertiary}
+            style={styles.input}
+            returnKeyType="search"
+            selectionColor={colors.primary}
+          />
+
+          {query.length > 0 && (
+            <TouchableOpacity onPress={handleClear} hitSlop={8}>
+              <Ionicons
+                name="close-circle"
+                size={20}
+                color={colors.text.tertiary}
+              />
+            </TouchableOpacity>
+          )}
+        </Animated.View>
+      </Animated.View>
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  wrapper: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+  },
+  container: {
+    borderRadius: radius.xl,
+    overflow: 'hidden',
+  },
+  inner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 56,
+    paddingHorizontal: spacing.lg,
+    backgroundColor: colors.glass.bg,
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    borderColor: colors.glass.border,
+  },
+  searchIcon: {
+    marginRight: spacing.md,
+  },
+  input: {
+    flex: 1,
+    fontSize: 16,
+    color: colors.text.primary,
+  },
+});
 
 export default SearchBar;
