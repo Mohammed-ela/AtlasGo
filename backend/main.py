@@ -7,6 +7,7 @@ import os
 import math
 from cachetools import TTLCache
 from pydantic import BaseModel
+import random
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -31,7 +32,10 @@ cache = TTLCache(maxsize=1000, ttl=300)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MOCK_DATA_FILE = os.path.join(BASE_DIR, "mock_data.json")
 
-OVERPASS_URL = "https://overpass-api.de/api/interpreter"
+OVERPASS_URLS = [
+    "https://overpass-api.de/api/interpreter",
+    "https://overpass.kumi.systems/api/interpreter",
+]
 
 TYPE_TO_OVERPASS = {
     "toilet": 'node["amenity"="toilets"]',
@@ -156,17 +160,16 @@ async def query_overpass(lat: float, lng: float, radius_m: int, types: List[str]
     if not query:
         return {}
 
-    try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.post(
-                OVERPASS_URL,
-                data={"data": query}
-            )
-            response.raise_for_status()
-            return response.json()
-    except Exception as e:
-        logger.error(f"Erreur Overpass: {e}")
-        return {}
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        for url in OVERPASS_URLS:
+            try:
+                response = await client.post(url, data={"data": query})
+                response.raise_for_status()
+                return response.json()
+            except Exception as e:
+                logger.warning(f"Erreur Overpass ({url}): {e}")
+    logger.error("Tous les serveurs Overpass ont echoue")
+    return {}
 
 
 def parse_overpass_type(tags: dict) -> Optional[str]:
@@ -228,24 +231,49 @@ def convert_overpass_to_pois(data: dict, center_lat: float, center_lng: float) -
     return pois
 
 
-def get_mock_pois(lat: float, lng: float, radius_m: int, types: List[str]) -> List[POI]:
+def generate_mock_pois_nearby(lat: float, lng: float, radius_m: int, types: List[str]) -> List[POI]:
+    """Generate mock POIs around the user's actual position."""
+    templates = {
+        "toilet": [
+            {"name": "Toilettes publiques", "amenities": ["gratuit", "accessible"], "oh": "24h/24"},
+            {"name": "Toilettes - Parc", "amenities": ["gratuit"], "oh": "7h-21h"},
+            {"name": "Toilettes - Centre commercial", "amenities": ["gratuit", "accessible"], "oh": "9h-22h"},
+        ],
+        "parking": [
+            {"name": "Parking souterrain", "amenities": ["payant", "surveille"], "oh": "24h/24"},
+            {"name": "Parking public", "amenities": ["payant"], "oh": "6h-23h"},
+            {"name": "Parking relais", "amenities": ["payant", "ascenseur"], "oh": "24h/24"},
+        ],
+        "wifi": [
+            {"name": "Wi-Fi public", "amenities": ["gratuit", "haut debit"], "oh": "24h/24"},
+            {"name": "Wi-Fi - Bibliotheque", "amenities": ["gratuit"], "oh": "9h-19h"},
+            {"name": "Wi-Fi - Place publique", "amenities": ["gratuit", "haut debit"], "oh": "24h/24"},
+        ],
+    }
+
     pois = []
-    for p in mock_data.get("places", []):
-        if p["type"] not in types:
-            continue
-        dist = calculate_distance(lat, lng, p["location"]["latitude"], p["location"]["longitude"])
-        if dist <= radius_m:
+    offset_deg = radius_m / 111000  # approx degrees per meter
+
+    for t in types:
+        for i, tpl in enumerate(templates.get(t, [])):
+            # Spread POIs randomly within the radius
+            dlat = random.uniform(-offset_deg, offset_deg)
+            dlng = random.uniform(-offset_deg, offset_deg)
+            plat = lat + dlat
+            plng = lng + dlng
+            dist = calculate_distance(lat, lng, plat, plng)
+
             pois.append(POI(
-                id=p["id"],
-                name=p["name"],
-                type=p["type"],
-                location=Location(**p["location"]),
+                id=f"mock_{t}_{i}",
+                name=tpl["name"],
+                type=t,
+                location=Location(latitude=plat, longitude=plng),
                 distance=dist,
-                address=p.get("address"),
-                opening_hours=p.get("opening_hours"),
-                description=p.get("description"),
-                amenities=p.get("amenities", [])
+                opening_hours=tpl["oh"],
+                description=f"{tpl['name']} a proximite",
+                amenities=tpl["amenities"],
             ))
+
     return pois
 
 
@@ -275,8 +303,8 @@ async def get_places(
             pois = convert_overpass_to_pois(overpass_data, lat, lng)
             logger.info(f"{len(pois)} POI depuis Overpass")
         else:
-            pois = get_mock_pois(lat, lng, radius_m, requested_types)
-            logger.info(f"Fallback mock: {len(pois)} POI")
+            pois = generate_mock_pois_nearby(lat, lng, radius_m, requested_types)
+            logger.info(f"Fallback mock (generated): {len(pois)} POI")
 
         pois.sort(key=lambda x: x.distance or 0)
 
