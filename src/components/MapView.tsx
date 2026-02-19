@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { View, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
-import MapView, { Region, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { Region } from 'react-native-maps';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
@@ -93,7 +93,6 @@ const MapViewComponent: React.FC<MapViewComponentProps> = ({
       <MapView
         ref={mapRef}
         style={styles.map}
-        provider={PROVIDER_GOOGLE}
         initialRegion={mapRegion}
         onRegionChangeComplete={handleRegionChangeComplete}
         onMapReady={() => setMapReady(true)}
