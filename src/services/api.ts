@@ -1,6 +1,6 @@
 import { POI, APIResponse, Location } from '@/types';
 
-const API_BASE_URL = 'http://192.168.1.129:8000';
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8000';
 
 async function apiFetch<T>(endpoint: string): Promise<T> {
   const controller = new AbortController();
