@@ -6,7 +6,7 @@ interface ThemeStore extends ThemeState {
   // Actions
   toggleTheme: () => void;
   setSystemTheme: (theme: 'light' | 'dark' | 'auto') => void;
-  initializeTheme: () => void;
+  initializeTheme: () => { remove: () => void } | undefined;
 }
 
 export const useThemeStore = create<ThemeStore>((set, get) => ({

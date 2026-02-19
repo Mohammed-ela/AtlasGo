@@ -1,15 +1,24 @@
-import axios from 'axios';
 import { POI, APIResponse, Location } from '@/types';
 
 const API_BASE_URL = 'http://192.168.1.129:8000';
 
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+async function apiFetch<T>(endpoint: string): Promise<T> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+  try {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      headers: { 'Content-Type': 'application/json' },
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    return response.json();
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
 
 export interface PlacesParams {
   lat: number;
@@ -37,23 +46,23 @@ export const placesApi = {
     const { lat, lng, radius_m, types } = params;
     const typesParam = types.join(',');
 
-    const response = await api.get(
+    const data = await apiFetch<any>(
       `/places?lat=${lat}&lng=${lng}&radius_m=${radius_m}&types=${typesParam}`
     );
 
     return {
-      places: (response.data.places || []).map(mapPOI),
-      total: response.data.total,
-      cached: response.data.cached,
+      places: (data.places || []).map(mapPOI),
+      total: data.total,
+      cached: data.cached,
     };
   },
 
   searchPlaces: async (query: string, location: Location): Promise<POI[]> => {
     try {
-      const response = await api.get(
+      const data = await apiFetch<any>(
         `/search?q=${encodeURIComponent(query)}&lat=${location.latitude}&lng=${location.longitude}`
       );
-      return (response.data || []).map(mapPOI);
+      return (data || []).map(mapPOI);
     } catch {
       return [];
     }
@@ -151,4 +160,4 @@ export const mockPlaces: POI[] = [
   },
 ];
 
-export default api;
+export default apiFetch;
