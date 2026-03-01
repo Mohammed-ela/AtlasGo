@@ -53,7 +53,6 @@ const POIDetailsSheet: React.FC<POIDetailsSheetProps> = ({ poi, onClose }) => {
 
   const handleClose = () => {
     bottomSheetRef.current?.close();
-    onClose();
   };
 
   const handleDirections = async () => {
@@ -91,7 +90,7 @@ const POIDetailsSheet: React.FC<POIDetailsSheetProps> = ({ poi, onClose }) => {
       ref={bottomSheetRef}
       index={-1}
       snapPoints={snapPoints}
-      onClose={handleClose}
+      onClose={onClose}
       enablePanDownToClose
       backgroundComponent={({ style }) => (
         <View style={[style, styles.sheetBackground]}>

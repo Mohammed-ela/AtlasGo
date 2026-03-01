@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { View, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import MapView, { Region } from 'react-native-maps';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
@@ -10,8 +10,6 @@ import POIMarker from './POIMarker';
 import ClusterMarker from './ClusterMarker';
 import mapStyle from '@/theme/mapStyle.json';
 import { colors, radius, blur, shadows, spacing } from '@/theme/tokens';
-
-const { width, height } = Dimensions.get('window');
 
 interface MapViewComponentProps {
   onPOISelect: (poi: POI) => void;
@@ -151,8 +149,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   map: {
-    width,
-    height,
+    flex: 1,
   },
   locateButtonContainer: {
     position: 'absolute',

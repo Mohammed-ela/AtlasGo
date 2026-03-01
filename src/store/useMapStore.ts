@@ -4,7 +4,6 @@ import { MapState, POI, Location, FilterState, Cluster } from '@/types';
 interface MapStore extends MapState {
   setUserLocation: (location: Location | null) => void;
   setPOIs: (pois: POI[]) => void;
-  setClusters: (clusters: Cluster[]) => void;
   setSelectedPOI: (poi: POI | null) => void;
   setFilters: (filters: Partial<FilterState>) => void;
   setLoading: (loading: boolean) => void;
@@ -80,8 +79,6 @@ export const useMapStore = create<MapStore>((set, get) => ({
     const clusters = buildClusters(pois);
     set({ pois, clusters });
   },
-
-  setClusters: (clusters) => set({ clusters }),
 
   setSelectedPOI: (poi) => set({ selectedPOI: poi }),
 

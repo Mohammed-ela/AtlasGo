@@ -3,10 +3,12 @@ import { View, StatusBar, Alert, StyleSheet } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Region } from 'react-native-maps';
+import { POI } from '@/types';
 import { useMapStore } from '@/store/useMapStore';
 import { useThemeStore } from '@/store/useThemeStore';
 import { locationService } from '@/services/location';
-import { placesApi, mockPlaces } from '@/services/api';
+import { placesApi } from '@/services/api';
 import MapViewComponent from './MapView';
 import SearchBar from './SearchBar';
 import FilterChips from './FilterChips';
@@ -38,6 +40,12 @@ const AtlasGoApp: React.FC = () => {
   const [showToast, setShowToast] = useState(false);
   const regionDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastFetchRef = useRef<string>('');
+
+  const showToastMessage = useCallback((message: string, type: 'success' | 'error' | 'info' = 'info') => {
+    setToastMessage(message);
+    setToastType(type);
+    setShowToast(true);
+  }, []);
 
   useEffect(() => {
     const subscription = initializeTheme();
@@ -86,7 +94,7 @@ const AtlasGoApp: React.FC = () => {
     requestLocation();
   }, [isInitialized]);
 
-  const loadNearbyPlaces = async (location: { latitude: number; longitude: number }, showLoading = true) => {
+  const loadNearbyPlaces = useCallback(async (location: { latitude: number; longitude: number }, showLoading = true) => {
     const key = `${location.latitude.toFixed(3)}_${location.longitude.toFixed(3)}`;
     if (key === lastFetchRef.current && !showLoading) return;
 
@@ -113,19 +121,20 @@ const AtlasGoApp: React.FC = () => {
         setPOIs(response.places);
         lastFetchRef.current = key;
       } catch {
-        const filteredMock = mockPlaces.filter(poi => activeTypes.includes(poi.type));
-        setPOIs(filteredMock);
+        setPOIs([]);
+        showToastMessage('Serveur indisponible, réessaie plus tard', 'error');
       }
     } catch (err) {
       console.error('Erreur chargement POI:', err);
       setError('Impossible de charger les lieux');
+      showToastMessage('Impossible de charger les lieux', 'error');
     } finally {
       if (showLoading) setLoading(false);
       if (isFirstLoad) setIsFirstLoad(false);
     }
-  };
+  }, [filters, clearError, setLoading, setPOIs, setError, isFirstLoad, showToastMessage]);
 
-  const handleRegionChange = useCallback((region: any) => {
+  const handleRegionChange = useCallback((region: Region) => {
     if (!userLocation) return;
 
     if (regionDebounceRef.current) {
@@ -138,9 +147,9 @@ const AtlasGoApp: React.FC = () => {
         longitude: region.longitude,
       }, false);
     }, 800);
-  }, [userLocation, filters]);
+  }, [userLocation, loadNearbyPlaces]);
 
-  const handlePOISelect = (poi: any) => {
+  const handlePOISelect = (poi: POI) => {
     setSelectedPOI(poi);
   };
 
@@ -148,7 +157,7 @@ const AtlasGoApp: React.FC = () => {
     setSelectedPOI(null);
   };
 
-  const handleSearch = async (query: string) => {
+  const handleSearch = useCallback(async (query: string) => {
     if (!query.trim()) {
       if (userLocation) {
         await loadNearbyPlaces(userLocation);
@@ -171,13 +180,13 @@ const AtlasGoApp: React.FC = () => {
       poi.address?.toLowerCase().includes(query.toLowerCase())
     );
     setPOIs(filtered);
-  };
+  }, [userLocation, loadNearbyPlaces, pois, setPOIs]);
 
-  const handleFilterChange = async () => {
+  const handleFilterChange = useCallback(async () => {
     if (userLocation) {
       await loadNearbyPlaces(userLocation);
     }
-  };
+  }, [userLocation, loadNearbyPlaces]);
 
   if (!isInitialized) {
     return null;
